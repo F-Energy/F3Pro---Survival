@@ -52,7 +52,7 @@ app.post('/api/gemini/advisor', async (req, res) => {
 System Recommendation for ${scenario || '30-Day Mountain Survival'}:
 1. Water Priority: Consume perishable water stores first before tapping boiled/purified snowmelt.
 2. Calorie Management: Prioritize high-water-content produce/perishables in Days 1-4. Shift to freeze-dried MREs and high-density fats (peanut butter, nuts) starting Day 5.
-3. Logistics Note: Contact Harper at AZ Solar Depot (+1 928-555-0199) via Aegis Satellite Dispatch for energy supply top-ups.`,
+3. Logistics Note: Contact Harper at AZ Solar Depot (+1 (623) 239-7699) via Aegis Satellite Dispatch for energy supply top-ups.`,
         modelUsed: 'Offline Rules Engine',
       });
     }
@@ -108,7 +108,7 @@ app.post('/api/logistics/dispatch', (req, res) => {
     timestamp,
     sender: 'Harper @ AZ Solar Depot',
     title: `Order Received: ${quantity || 1}x ${itemCategory || 'Solar & Fuel Supply'}`,
-    message: `Harper (+1 928-555-0199): Satellite dispatch signal verified for ${itemDetails || 'Solar Generator & Fuel Pack'}. Route: Drop Zone ${dropCoordinates || 'GPS Lock'}. Dispatch ETA: 45-90 mins.`,
+    message: `Harper (+1 (623) 239-7699): Satellite dispatch signal verified for ${itemDetails || 'Solar Generator & Fuel Pack'}. Route: Drop Zone ${dropCoordinates || 'GPS Lock'}. Dispatch ETA: 45-90 mins.`,
     priority: urgency === 'EMERGENCY' ? 'URGENT' : 'HIGH',
     read: false,
   };
@@ -119,7 +119,7 @@ app.post('/api/logistics/dispatch', (req, res) => {
     success: true,
     ticketId,
     timestamp,
-    recipient: 'Harper @ AZ Solar Depot (+1 928-555-0199)',
+    recipient: 'Harper @ AZ Solar Depot (+1 (623) 239-7699)',
     status: 'SATELLITE_DISPATCHED',
     estimatedETA: '45-90 Minutes via Overland/Sat-Drone',
     confirmationMessage: `Text notification transmitted to Harper at AZ Solar Depot. Dispatch ticket ${ticketId} confirmed.`

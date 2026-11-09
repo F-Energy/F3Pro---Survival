@@ -4,13 +4,15 @@ import {
   Search, 
   Plus, 
   Trash2, 
+  Edit3,
   Clock, 
   Droplets, 
   Flame, 
   Zap, 
   HeartPulse, 
   Wrench,
-  Utensils
+  Utensils,
+  Check
 } from 'lucide-react';
 import { InventoryItem, SupplyCategory } from '../types/survival';
 
@@ -26,19 +28,54 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [perishableOnly, setPerishableOnly] = useState(false);
+  
+  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
   // New item form state
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemCategory, setNewItemCategory] = useState<SupplyCategory>('STAPLE_FOOD');
-  const [newItemQty, setNewItemQty] = useState(1);
-  const [newItemUnit, setNewItemUnit] = useState('pouches');
-  const [newItemCalories, setNewItemCalories] = useState(500);
-  const [newItemWeightOz, setNewItemWeightOz] = useState(8);
-  const [newItemExpDate, setNewItemExpDate] = useState('2027-12-31');
-  const [newItemPerishable, setNewItemPerishable] = useState(false);
-  const [newItemMinThreshold, setNewItemMinThreshold] = useState(2);
-  const [newItemLocation, setNewItemLocation] = useState('Crate A');
+  const [itemName, setItemName] = useState('');
+  const [itemCategory, setItemCategory] = useState<SupplyCategory>('STAPLE_FOOD');
+  const [itemQty, setItemQty] = useState(1);
+  const [itemUnit, setItemUnit] = useState('pouches');
+  const [itemCalories, setItemCalories] = useState(500);
+  const [itemWeightOz, setItemWeightOz] = useState(8);
+  const [itemExpDate, setItemExpDate] = useState('2027-12-31');
+  const [itemPerishable, setItemPerishable] = useState(false);
+  const [itemMinThreshold, setItemMinThreshold] = useState(2);
+  const [itemLocation, setItemLocation] = useState('Crate A');
+
+  // Open add modal
+  const handleOpenAddModal = () => {
+    setEditingItem(null);
+    setItemName('');
+    setItemCategory('STAPLE_FOOD');
+    setItemQty(1);
+    setItemUnit('pouches');
+    setItemCalories(500);
+    setItemWeightOz(8);
+    setItemExpDate('2027-12-31');
+    setItemPerishable(false);
+    setItemMinThreshold(2);
+    setItemLocation('Crate A');
+    setIsAddModalOpen(true);
+  };
+
+  // Open edit modal for item
+  const handleOpenEditModal = (item: InventoryItem) => {
+    setEditingItem(item);
+    setItemName(item.name);
+    setItemCategory(item.category);
+    setItemQty(item.quantity);
+    setItemUnit(item.unit);
+    setItemCalories(item.caloriesPerUnit);
+    setItemWeightOz(item.weightOz);
+    setItemExpDate(item.expirationDate);
+    setItemPerishable(item.perishable);
+    setItemMinThreshold(item.minThreshold);
+    setItemLocation(item.location);
+    setIsAddModalOpen(true);
+  };
 
   // Filter items
   const filteredItems = inventory.filter((item) => {
@@ -73,27 +110,50 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
     }
   };
 
-  const handleAddItem = (e: React.FormEvent) => {
+  const handleSaveItem = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newItemName.trim()) return;
+    if (!itemName.trim()) return;
 
-    const item: InventoryItem = {
-      id: `inv-user-${Date.now()}`,
-      name: newItemName,
-      category: newItemCategory,
-      quantity: Number(newItemQty),
-      unit: newItemUnit,
-      caloriesPerUnit: Number(newItemCalories),
-      weightOz: Number(newItemWeightOz),
-      expirationDate: newItemExpDate,
-      perishable: newItemPerishable,
-      minThreshold: Number(newItemMinThreshold),
-      location: newItemLocation,
-    };
+    if (editingItem) {
+      // Update existing item
+      setInventory(prev => prev.map(i => {
+        if (i.id === editingItem.id) {
+          return {
+            ...i,
+            name: itemName.trim(),
+            category: itemCategory,
+            quantity: Number(itemQty),
+            unit: itemUnit,
+            caloriesPerUnit: Number(itemCalories),
+            weightOz: Number(itemWeightOz),
+            expirationDate: itemExpDate,
+            perishable: itemPerishable,
+            minThreshold: Number(itemMinThreshold),
+            location: itemLocation,
+          };
+        }
+        return i;
+      }));
+    } else {
+      // Add new item
+      const item: InventoryItem = {
+        id: `inv-user-${Date.now()}`,
+        name: itemName.trim(),
+        category: itemCategory,
+        quantity: Number(itemQty),
+        unit: itemUnit,
+        caloriesPerUnit: Number(itemCalories),
+        weightOz: Number(itemWeightOz),
+        expirationDate: itemExpDate,
+        perishable: itemPerishable,
+        minThreshold: Number(itemMinThreshold),
+        location: itemLocation,
+      };
 
-    setInventory(prev => [item, ...prev]);
+      setInventory(prev => [item, ...prev]);
+    }
+
     setIsAddModalOpen(false);
-    setNewItemName('');
   };
 
   const handleQtyChange = (id: string, delta: number) => {
@@ -127,7 +187,7 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
         </div>
 
         <button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={handleOpenAddModal}
           className="px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-colors shadow-md shadow-yellow-400/20 shrink-0"
         >
           <Plus className="w-4 h-4" />
@@ -226,6 +286,7 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                         <button
                           onClick={() => handleQtyChange(item.id, -1)}
                           className="w-6 h-6 rounded bg-[#060b17] border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold flex items-center justify-center text-xs"
+                          title="Decrease quantity"
                         >
                           -
                         </button>
@@ -235,6 +296,7 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                         <button
                           onClick={() => handleQtyChange(item.id, 1)}
                           className="w-6 h-6 rounded bg-[#060b17] border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold flex items-center justify-center text-xs"
+                          title="Increase quantity"
                         >
                           +
                         </button>
@@ -264,15 +326,24 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                       </div>
                     </td>
 
-                    {/* Actions */}
+                    {/* Actions: Edit & Delete */}
                     <td className="px-4 py-3.5 text-right">
-                      <button
-                        onClick={() => handleDeleteItem(item.id)}
-                        className="p-1.5 text-slate-500 hover:text-red-400 rounded hover:bg-slate-800 transition-colors"
-                        title="Delete supply item"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleOpenEditModal(item)}
+                          className="p-1.5 text-slate-400 hover:text-yellow-400 rounded hover:bg-slate-800 transition-colors"
+                          title="Edit supply item details"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteItem(item.id)}
+                          className="p-1.5 text-slate-500 hover:text-red-400 rounded hover:bg-slate-800 transition-colors"
+                          title="Delete supply item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
 
                   </tr>
@@ -291,24 +362,25 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
         </div>
       </div>
 
-      {/* Add Item Modal */}
+      {/* Add / Edit Item Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 font-mono">
           <div className="bg-[#0b1426] border border-slate-800 rounded-xl p-6 max-w-md w-full space-y-4 shadow-2xl">
             <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-              <Plus className="w-5 h-5 text-yellow-400" /> Add New Supply / Food Item
+              {editingItem ? <Edit3 className="w-5 h-5 text-yellow-400" /> : <Plus className="w-5 h-5 text-yellow-400" />}
+              <span>{editingItem ? 'Edit Inventory Item' : 'Add New Supply / Food Item'}</span>
             </h2>
 
-            <form onSubmit={handleAddItem} className="space-y-3 text-xs">
+            <form onSubmit={handleSaveItem} className="space-y-3 text-xs">
               <div>
                 <label className="text-slate-400 block mb-1">Item Name</label>
                 <input
                   type="text"
                   required
-                  value={newItemName}
-                  onChange={(e) => setNewItemName(e.target.value)}
+                  value={itemName}
+                  onChange={(e) => setItemName(e.target.value)}
                   placeholder="e.g. Organic Dried Cranberries"
-                  className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
+                  className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2 focus:outline-none focus:border-yellow-400"
                 />
               </div>
 
@@ -316,9 +388,9 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                 <div>
                   <label className="text-slate-400 block mb-1">Category</label>
                   <select
-                    value={newItemCategory}
-                    onChange={(e: any) => setNewItemCategory(e.target.value)}
-                    className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
+                    value={itemCategory}
+                    onChange={(e: any) => setItemCategory(e.target.value)}
+                    className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2 focus:outline-none focus:border-yellow-400"
                   >
                     <option value="PERISHABLE_FOOD">Perishable Food</option>
                     <option value="STAPLE_FOOD">Staple Food</option>
@@ -335,15 +407,15 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                   <div className="flex gap-2">
                     <input
                       type="number"
-                      min="1"
-                      value={newItemQty}
-                      onChange={(e) => setNewItemQty(Number(e.target.value))}
+                      min="0"
+                      value={itemQty}
+                      onChange={(e) => setItemQty(Number(e.target.value))}
                       className="w-16 bg-[#060b17] border border-slate-800 text-slate-100 rounded px-2 py-2"
                     />
                     <input
                       type="text"
-                      value={newItemUnit}
-                      onChange={(e) => setNewItemUnit(e.target.value)}
+                      value={itemUnit}
+                      onChange={(e) => setItemUnit(e.target.value)}
                       className="flex-1 bg-[#060b17] border border-slate-800 text-slate-100 rounded px-2 py-2"
                     />
                   </div>
@@ -355,8 +427,8 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                   <label className="text-slate-400 block mb-1">Calories Per Unit</label>
                   <input
                     type="number"
-                    value={newItemCalories}
-                    onChange={(e) => setNewItemCalories(Number(e.target.value))}
+                    value={itemCalories}
+                    onChange={(e) => setItemCalories(Number(e.target.value))}
                     className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
                   />
                 </div>
@@ -364,8 +436,8 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                   <label className="text-slate-400 block mb-1">Weight (oz)</label>
                   <input
                     type="number"
-                    value={newItemWeightOz}
-                    onChange={(e) => setNewItemWeightOz(Number(e.target.value))}
+                    value={itemWeightOz}
+                    onChange={(e) => setItemWeightOz(Number(e.target.value))}
                     className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
                   />
                 </div>
@@ -376,8 +448,8 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                   <label className="text-slate-400 block mb-1">Expiration Date</label>
                   <input
                     type="date"
-                    value={newItemExpDate}
-                    onChange={(e) => setNewItemExpDate(e.target.value)}
+                    value={itemExpDate}
+                    onChange={(e) => setItemExpDate(e.target.value)}
                     className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
                   />
                 </div>
@@ -385,8 +457,8 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                   <label className="text-slate-400 block mb-1">Storage Location</label>
                   <input
                     type="text"
-                    value={newItemLocation}
-                    onChange={(e) => setNewItemLocation(e.target.value)}
+                    value={itemLocation}
+                    onChange={(e) => setItemLocation(e.target.value)}
                     className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
                   />
                 </div>
@@ -396,14 +468,14 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                 <input
                   type="checkbox"
                   id="perish"
-                  checked={newItemPerishable}
-                  onChange={(e) => setNewItemPerishable(e.target.checked)}
+                  checked={itemPerishable}
+                  onChange={(e) => setItemPerishable(e.target.checked)}
                   className="accent-yellow-400"
                 />
                 <label htmlFor="perish" className="text-slate-300">Item is Perishable (Expiring within 7 days)</label>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
@@ -413,9 +485,10 @@ export const FoodInventory: React.FC<FoodInventoryProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-slate-950 rounded font-bold"
+                  className="px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-slate-950 rounded font-bold flex items-center gap-1.5"
                 >
-                  Save Item
+                  <Check className="w-4 h-4" />
+                  <span>{editingItem ? 'Save Changes' : 'Save New Item'}</span>
                 </button>
               </div>
             </form>

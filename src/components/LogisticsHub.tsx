@@ -84,7 +84,7 @@ export const LogisticsHub: React.FC<LogisticsHubProps> = ({ userLocation, onOpen
           quantity,
           status: 'SATELLITE_DISPATCHED',
           recipient: 'Harper @ AZ Solar Depot',
-          recipientPhone: '+1 (928) 555-0199',
+          recipientPhone: '+1 (623) 239-7699',
           dropCoordinates: dropCoords,
           urgency,
           timestamp: data.timestamp,
@@ -119,7 +119,7 @@ export const LogisticsHub: React.FC<LogisticsHubProps> = ({ userLocation, onOpen
           </div>
           <h1 className="text-xl font-bold text-slate-100">AZ Solar Depot Dispatch & Supply Chain</h1>
           <p className="text-xs text-slate-400 mt-1">
-            Direct text messaging link to <span className="text-yellow-400 font-bold">Harper</span> at <span className="text-yellow-400 font-bold">AZ Solar Depot (+1 928-555-0199)</span> for rapid energy replenishment.
+            Direct text messaging link to <span className="text-yellow-400 font-bold">Harper</span> at <span className="text-yellow-400 font-bold">AZ Solar Depot (+1 623-239-7699)</span> for rapid energy replenishment.
           </p>
         </div>
 
@@ -127,7 +127,7 @@ export const LogisticsHub: React.FC<LogisticsHubProps> = ({ userLocation, onOpen
           <PhoneCall className="w-4 h-4 text-emerald-400" />
           <div>
             <div className="text-slate-200 font-bold">Harper @ AZ Solar Depot</div>
-            <div className="text-[10px] text-slate-400">+1 (928) 555-0199 · Sat-Link Active</div>
+            <div className="text-[10px] text-slate-400">+1 (623) 239-7699 · Sat-Link Active</div>
           </div>
         </div>
       </div>

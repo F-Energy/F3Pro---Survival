@@ -618,7 +618,7 @@ export const RationingHub: React.FC<RationingHubProps> = ({
               </p>
               <div className="pt-1 flex items-center justify-between text-[11px] text-slate-300">
                 <span className="flex items-center gap-1 text-emerald-400 font-semibold"><ShieldCheck className="w-3.5 h-3.5" /> High-Altitude LiFePO4 Approved</span>
-                <span className="text-yellow-300 font-bold">+1 (928) 555-0199</span>
+                <span className="text-yellow-300 font-bold">+1 (623) 239-7699</span>
               </div>
             </div>
 

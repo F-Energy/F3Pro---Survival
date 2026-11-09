@@ -10,7 +10,9 @@ import {
   Minus, 
   CheckCircle2,
   BookOpen,
-  MapPin
+  MapPin,
+  Trash2,
+  Check
 } from 'lucide-react';
 import { NaturalResource, ResourceType, UserLocation } from '../types/survival';
 import { INITIAL_RESOURCES } from '../services/storage';
@@ -25,6 +27,16 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedResource, setSelectedResource] = useState<NaturalResource | null>(INITIAL_RESOURCES[0]);
   
+  // Custom Waypoint modal state
+  const [isAddWaypointOpen, setIsAddWaypointOpen] = useState(false);
+  const [wpName, setWpName] = useState('');
+  const [wpType, setWpType] = useState<ResourceType>('WATER_SOURCE');
+  const [wpLat, setWpLat] = useState<number>(userLocation.lat);
+  const [wpLng, setWpLng] = useState<number>(userLocation.lng);
+  const [wpElev, setWpElev] = useState<number>(userLocation.elevationFt);
+  const [wpDesc, setWpDesc] = useState('');
+  const [wpPrepNotes, setWpPrepNotes] = useState('');
+
   // Map Viewport state
   const [zoom, setZoom] = useState<number>(1.2);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -54,7 +66,7 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
     ctx.translate(width / 2 + pan.x, height / 2 + pan.y);
     ctx.scale(zoom, zoom);
 
-    // Draw Topographic Contour Lines (Soft oceanic slate blue)
+    // Draw Topographic Contour Lines
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1;
 
@@ -64,7 +76,7 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
       ctx.stroke();
     }
 
-    // Grid Coordinates (Deep MGRS grid simulation)
+    // Grid Coordinates
     ctx.strokeStyle = '#0f172a';
     ctx.lineWidth = 0.5;
 
@@ -80,7 +92,7 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
       ctx.stroke();
     }
 
-    // River / Water Contour Line (Vibrant Ocean Cyan Blue)
+    // River / Water Contour Line
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
@@ -112,14 +124,12 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
 
     // Render Natural Resource Markers
     filteredResources.forEach((res) => {
-      // Offset coords relative to base GPS (38.8524, -105.0441)
       const dx = (res.lng - (-105.0441)) * 12000;
       const dy = -(res.lat - 38.8524) * 12000;
 
       const isSelected = selectedResource?.id === res.id;
 
-      // Color coding per type
-      let markerColor = '#34d399'; // Emerald edible
+      let markerColor = '#34d399';
       if (res.type === 'WATER_SOURCE') markerColor = '#38bdf8';
       if (res.type === 'SHELTER_SPOT') markerColor = '#c084fc';
       if (res.type === 'SIGNAL_SPOT') markerColor = '#fb7185';
@@ -142,7 +152,6 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
         ctx.stroke();
       }
 
-      // Marker Label
       ctx.fillStyle = isSelected ? '#fef08a' : '#94a3b8';
       ctx.font = '10px "JetBrains Mono", monospace';
       ctx.fillText(res.name, dx + 12, dy + 4);
@@ -159,6 +168,45 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
       case 'SHELTER_SPOT': return <Mountain className="w-4 h-4 text-purple-400" />;
       case 'SIGNAL_SPOT': return <Radio className="w-4 h-4 text-rose-400" />;
       case 'FIREWOOD_ZONE': return <Flame className="w-4 h-4 text-orange-400" />;
+    }
+  };
+
+  const handleOpenAddWaypoint = () => {
+    setWpName('My Custom Waypoint Cache');
+    setWpType('WATER_SOURCE');
+    setWpLat(userLocation.lat);
+    setWpLng(userLocation.lng);
+    setWpElev(userLocation.elevationFt);
+    setWpDesc('Custom emergency stash marked during expedition.');
+    setWpPrepNotes('Verify seal on water bladder before consumption.');
+    setIsAddWaypointOpen(true);
+  };
+
+  const handleSaveWaypoint = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!wpName.trim()) return;
+
+    const newRes: NaturalResource = {
+      id: `res-custom-${Date.now()}`,
+      name: wpName.trim(),
+      type: wpType,
+      lat: Number(wpLat),
+      lng: Number(wpLng),
+      elevationFt: Number(wpElev),
+      description: wpDesc.trim() || 'Custom user waypoint.',
+      safetyRating: 'SAFE',
+      prepNotes: wpPrepNotes.trim() || 'Custom notes.',
+    };
+
+    setResources(prev => [newRes, ...prev]);
+    setSelectedResource(newRes);
+    setIsAddWaypointOpen(false);
+  };
+
+  const handleDeleteWaypoint = (id: string) => {
+    setResources(prev => prev.filter(r => r.id !== id));
+    if (selectedResource?.id === id) {
+      setSelectedResource(null);
     }
   };
 
@@ -182,36 +230,56 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
           </div>
         </div>
 
-        {/* Change Address Button & Filter Buttons */}
+        {/* Change Address Button & Add Waypoint Button */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            onClick={handleOpenAddWaypoint}
+            className="px-3 py-1.5 rounded-lg bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors shadow"
+          >
+            <Plus className="w-3.5 h-3.5" /> Add Waypoint Pin
+          </button>
           <button
             onClick={onOpenLocationModal}
             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-yellow-400 font-bold border border-yellow-400/40 text-xs flex items-center gap-1.5 transition-colors"
           >
             <MapPin className="w-3.5 h-3.5" /> Edit Current Address
           </button>
-          
-          <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
-            <button
-              onClick={() => setSelectedType('ALL')}
-              className={`px-3 py-1.5 rounded-lg border transition-colors ${selectedType === 'ALL' ? 'bg-yellow-400 text-slate-950 font-bold border-yellow-400' : 'bg-[#060b17] text-slate-400 border-slate-800 hover:text-slate-200'}`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setSelectedType('WATER_SOURCE')}
-              className={`px-3 py-1.5 rounded-lg border transition-colors ${selectedType === 'WATER_SOURCE' ? 'bg-sky-400 text-slate-950 font-bold border-sky-400' : 'bg-[#060b17] text-slate-400 border-slate-800 hover:text-slate-200'}`}
-            >
-              Water
-            </button>
-            <button
-              onClick={() => setSelectedType('EDIBLE_PLANT')}
-              className={`px-3 py-1.5 rounded-lg border transition-colors ${selectedType === 'EDIBLE_PLANT' ? 'bg-emerald-400 text-slate-950 font-bold border-emerald-400' : 'bg-[#060b17] text-slate-400 border-slate-800 hover:text-slate-200'}`}
-            >
-              Plants
-            </button>
-          </div>
         </div>
+      </div>
+
+      {/* Filter Buttons Bar */}
+      <div className="flex items-center gap-1.5 overflow-x-auto text-xs bg-[#0b1426] p-3 rounded-xl border border-slate-800">
+        <span className="text-slate-400 font-bold mr-2">Filter Layer:</span>
+        <button
+          onClick={() => setSelectedType('ALL')}
+          className={`px-3 py-1.5 rounded-lg border transition-colors ${selectedType === 'ALL' ? 'bg-yellow-400 text-slate-950 font-bold border-yellow-400' : 'bg-[#060b17] text-slate-400 border-slate-800 hover:text-slate-200'}`}
+        >
+          All ({resources.length})
+        </button>
+        <button
+          onClick={() => setSelectedType('WATER_SOURCE')}
+          className={`px-3 py-1.5 rounded-lg border transition-colors ${selectedType === 'WATER_SOURCE' ? 'bg-sky-400 text-slate-950 font-bold border-sky-400' : 'bg-[#060b17] text-slate-400 border-slate-800 hover:text-slate-200'}`}
+        >
+          Water
+        </button>
+        <button
+          onClick={() => setSelectedType('EDIBLE_PLANT')}
+          className={`px-3 py-1.5 rounded-lg border transition-colors ${selectedType === 'EDIBLE_PLANT' ? 'bg-emerald-400 text-slate-950 font-bold border-emerald-400' : 'bg-[#060b17] text-slate-400 border-slate-800 hover:text-slate-200'}`}
+        >
+          Edible Plants
+        </button>
+        <button
+          onClick={() => setSelectedType('SHELTER_SPOT')}
+          className={`px-3 py-1.5 rounded-lg border transition-colors ${selectedType === 'SHELTER_SPOT' ? 'bg-purple-400 text-slate-950 font-bold border-purple-400' : 'bg-[#060b17] text-slate-400 border-slate-800 hover:text-slate-200'}`}
+        >
+          Shelters
+        </button>
+        <button
+          onClick={() => setSelectedType('SIGNAL_SPOT')}
+          className={`px-3 py-1.5 rounded-lg border transition-colors ${selectedType === 'SIGNAL_SPOT' ? 'bg-rose-500 text-white font-bold border-rose-500' : 'bg-[#060b17] text-slate-400 border-slate-800 hover:text-slate-200'}`}
+        >
+          Sat Signal
+        </button>
       </div>
 
       {/* Main Grid: Interactive Map (8 cols) & Detail Drawer (4 cols) */}
@@ -297,9 +365,15 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
                   {getResourceIcon(selectedResource.type)}
                   <h2 className="text-base font-bold text-slate-100">{selectedResource.name}</h2>
                 </div>
-                <span className="px-2 py-0.5 rounded bg-[#060b17] text-yellow-400 border border-slate-800 text-[10px] font-bold uppercase">
-                  {selectedResource.type.replace('_', ' ')}
-                </span>
+                {selectedResource.id.startsWith('res-custom-') && (
+                  <button
+                    onClick={() => handleDeleteWaypoint(selectedResource.id)}
+                    className="p-1 text-slate-500 hover:text-red-400 rounded"
+                    title="Delete custom waypoint"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               {/* Coordinates & Distance */}
@@ -355,8 +429,9 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
 
           {/* Quick List of Nearby Resources */}
           <div className="p-4 rounded-xl bg-[#0b1426] border border-slate-800 space-y-2 text-xs shadow-xl">
-            <div className="text-slate-400 font-bold uppercase text-[10px] pb-1 border-b border-slate-800">
-              Nearby Sector Resource Directory
+            <div className="text-slate-400 font-bold uppercase text-[10px] pb-1 border-b border-slate-800 flex justify-between">
+              <span>Nearby Sector Resource Directory</span>
+              <span>{resources.length} Points</span>
             </div>
             <div className="space-y-1.5 max-h-56 overflow-y-auto">
               {resources.map(res => (
@@ -380,6 +455,116 @@ export const OfflineMap: React.FC<OfflineMapProps> = ({ userLocation, onOpenLoca
         </div>
 
       </div>
+
+      {/* Add Waypoint Pin Modal */}
+      {isAddWaypointOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0b1426] border border-slate-800 rounded-xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <Plus className="w-5 h-5 text-yellow-400" /> Drop Custom Waypoint Pin
+            </h2>
+
+            <form onSubmit={handleSaveWaypoint} className="space-y-3 text-xs">
+              <div>
+                <label className="text-slate-400 block mb-1">Waypoint Name</label>
+                <input
+                  type="text"
+                  required
+                  value={wpName}
+                  onChange={(e) => setWpName(e.target.value)}
+                  className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-400 block mb-1">Type</label>
+                  <select
+                    value={wpType}
+                    onChange={(e: any) => setWpType(e.target.value)}
+                    className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
+                  >
+                    <option value="WATER_SOURCE">Water Source</option>
+                    <option value="EDIBLE_PLANT">Edible Plant</option>
+                    <option value="SHELTER_SPOT">Shelter Spot</option>
+                    <option value="SIGNAL_SPOT">Signal Spot</option>
+                    <option value="FIREWOOD_ZONE">Firewood Zone</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block mb-1">Elevation (ft)</label>
+                  <input
+                    type="number"
+                    value={wpElev}
+                    onChange={(e) => setWpElev(Number(e.target.value))}
+                    className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-400 block mb-1">Latitude (°N)</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={wpLat}
+                    onChange={(e) => setWpLat(Number(e.target.value))}
+                    className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1">Longitude (°W)</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={wpLng}
+                    onChange={(e) => setWpLng(Number(e.target.value))}
+                    className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1">Description</label>
+                <input
+                  type="text"
+                  value={wpDesc}
+                  onChange={(e) => setWpDesc(e.target.value)}
+                  className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1">Safety & Prep Notes</label>
+                <input
+                  type="text"
+                  value={wpPrepNotes}
+                  onChange={(e) => setWpPrepNotes(e.target.value)}
+                  className="w-full bg-[#060b17] border border-slate-800 text-slate-100 rounded px-3 py-2"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddWaypointOpen(false)}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-slate-950 rounded font-bold flex items-center gap-1"
+                >
+                  <Check className="w-4 h-4" /> Save Waypoint Pin
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );
