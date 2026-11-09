@@ -1,0 +1,6 @@
+{
+  "name": "Aegis Survival - Off-Grid & Power Outage Rationing System",
+  "description": "Tactical survival app for 30-day off-grid mountain trips & power outages. Features supply rationing estimator, water & calorie calculator, offline maps, natural resources guide, gear checklist generator, emergency SOS shake beacon, logistics dispatcher for Harper at AZ Solar Depot, encrypted vault, and OLED battery-saver UI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

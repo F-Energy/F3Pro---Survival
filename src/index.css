@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    font-family: 'Outfit', sans-serif;
+    background-color: #0e243a;
+  }
+  
+  .font-mono, code, kbd, samp {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Scotopic Red Vision Mode for Night Shift outdoors */
+.mode-red-vision {
+  filter: sepia(100%) hue-rotate(310deg) saturate(600%) contrast(150%);
+  background-color: #050a14 !important;
+}
+
+.mode-red-vision * {
+  border-color: rgba(255, 0, 0, 0.4) !important;
+}
+
+/* Custom scrollbar for navy & gold tactical UI */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #091122;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #eab308;
+}
